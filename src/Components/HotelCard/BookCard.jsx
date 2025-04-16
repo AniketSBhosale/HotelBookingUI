@@ -1,0 +1,63 @@
+import React from "react";
+import { RiHotelBedFill } from "react-icons/ri";
+import { useNavigate } from "react-router-dom";
+export default function BookCard(props) {
+  let navigate = useNavigate();
+  function handleData() {
+    navigate("/hotelPage");
+  }
+  return (
+    // <div
+    //   className="rounded d-flex w-100"
+    //   style={{
+    //     justifyContent: "center",
+    //     alignItems: "center",
+    //     padding: "1rem",
+
+    //     boxShadow: "rgba(17, 12, 46, 0.15) 0px 48px 200px 0px",
+    //   }}
+    // >
+    //   <div
+    //     className="container p-5 text-white"
+    //     style={{
+    //       backgroundImage:
+    //         "url('https://img.freepik.com/premium-photo/hotel-interior-its-beautiful-surroundings-with-flowers-drinks-lobby-stairs-lift-resturants_747046-543.jpg?ga=GA1.1.1464861887.1734063462&semt=ais_hybrid&w=740')",
+    //       backgroundSize: "100% 100%",
+    //     }}
+    //   >
+    //     <h1 style={{ fontSize: "2rem" }}>{props.hotelName}</h1>
+
+    //     <h1 style={{ fontSize: "1rem" }}>Rooms: {props.hotelRoomsAvailable}</h1>
+    //     <button
+    //       className="btn btn-danger"
+    //       onClick={() => handleData(props.hotelid)}
+    //     >
+    //       Book Now
+    //     </button>
+    //   </div>
+    // </div>
+    <div className="card text-white w-100 h-100 border-0 shadow-sm">
+      <div
+        className="d-flex flex-column justify-content-end p-3"
+        style={{
+          height: "250px",
+          backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.1)), url('https://img.freepik.com/premium-photo/hotel-interior-its-beautiful-surroundings-with-flowers-drinks-lobby-stairs-lift-resturants_747046-543.jpg')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          borderRadius: "0.5rem",
+        }}
+      >
+        <h5 className="fw-bold mb-1">{props.hotelName}</h5>
+        <p className="mb-1">Rooms: {props.hotelRoomsAvailable}</p>
+        <p className="mb-1">Location: {props.hotelLocatioon}</p>
+        <p className="mb-2">Price: ₹{props.hotelPrice}</p>
+        <button
+          className="btn btn-danger btn-sm"
+          onClick={() => handleData(props.hotelid)}
+        >
+          Book Now
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
+import userService from "../../service/userService";
 
 export default function LoginPage({ setLogin }) {
-  const [form, setForm] = useState({ username: "", password: "", role: "user" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [validated, setValidated] = useState(false);
+  const [message, setMessage] = useState(""); // ⬅️ For success or error message
+  const [messageType, setMessageType] = useState(""); // success / danger
   const navigate = useNavigate();
 
   function setField(field, value) {
@@ -14,21 +17,26 @@ export default function LoginPage({ setLogin }) {
     e.preventDefault();
     setValidated(true);
 
-    const { username, password, role } = form;
+    const { email, password } = form;
 
-    // Simple hardcoded login logic
-    if (username === "user" && password === "123" && role === "user") {
-      setLogin(true);
-      navigate("/user-dashboard");
-    } else if (username === "hoteladmin" && password === "123" && role === "hoteladmin") {
-      setLogin(true);
-      navigate("/hoteladmin-dashboard");
-    } else if (username === "admin" && password === "123" && role === "admin") {
-      setLogin(true);
-      navigate("/admin-dashboard");
-    } else {
-      alert("Invalid credentials or role");
-    }
+    userService.userLogin({ email, password })
+      .then((response) => {
+        if (response.data !== "Login Failed Invalid Credentials") {
+          setLogin(true);
+          localStorage.setItem("role", response.data); // Save role if needed
+          setMessageType("success");
+          setMessage("Login Successful as " + response.data);
+          setTimeout(() => navigate("/dashboard"), 1500); // Delay redirect for user to see message
+        } else {
+          setMessageType("danger");
+          setMessage("Invalid credentials");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        setMessageType("danger");
+        setMessage("An error occurred during login");
+      });
   };
 
   return (
@@ -41,17 +49,22 @@ export default function LoginPage({ setLogin }) {
       >
         <h2 className="text-center mb-4 text-dark">Login</h2>
 
+        {message && (
+          <div className={`alert alert-${messageType}`} role="alert">
+            {message}
+          </div>
+        )}
+
         <div className="mb-3">
           <input
-            type="text"
-            className={`form-control ${validated && !form.username ? "is-invalid" : ""}`}
-            placeholder="Username"
-            name="username"
-            value={form.username}
-            onChange={(e) => setField("username", e.target.value)}
+            type="email"
+            className={`form-control ${validated && !form.email ? "is-invalid" : ""}`}
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => setField("email", e.target.value)}
             required
           />
-          <div className="invalid-feedback">Username is required</div>
+          <div className="invalid-feedback">Email is required</div>
         </div>
 
         <div className="mb-3">
@@ -59,7 +72,6 @@ export default function LoginPage({ setLogin }) {
             type="password"
             className={`form-control ${validated && !form.password ? "is-invalid" : ""}`}
             placeholder="Password"
-            name="password"
             value={form.password}
             onChange={(e) => setField("password", e.target.value)}
             required
@@ -67,26 +79,13 @@ export default function LoginPage({ setLogin }) {
           <div className="invalid-feedback">Password is required</div>
         </div>
 
-        {/* Optional role selector */}
-        {/* <div className="mb-3">
-          <select
-            className="form-select"
-            value={form.role}
-            onChange={(e) => setField("role", e.target.value)}
-          >
-            <option value="user">User</option>
-            <option value="hoteladmin">Hotel Admin</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div> */}
-
         <button type="submit" className="btn btn-danger w-100">
           Login
         </button>
 
         <div className="d-flex justify-content-between align-items-center mt-3">
           <label>
-            <input type="checkbox" name="remember" className="me-2" />
+            <input type="checkbox" className="me-2" />
             Remember Me
           </label>
           <NavLink to="/forgotpassword" className="text-primary">

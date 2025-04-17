@@ -74,18 +74,15 @@ export default function UserRegister() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (validateForm()) {
       const { name, email, password, phone } = form;
       console.log("Form Submitted:", { name, email, password, phone });
       userService.userRegister(form)
         .then((response) => {
           console.log("User registered successfully:", response.data);
-          // Redirect to login page or show success message
         })
         .catch((error) => {
-          console.error("Error registering user:", error);
-          // Handle error (e.g., show error message)
+          console.error("Error registering user:", error); 
         });
     }
   };
@@ -162,11 +159,9 @@ export default function UserRegister() {
           />
           {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
         </div>
-
         <button className="btn btn-danger w-100" onClick={handleSubmit}>
           Register
         </button>
-
         <p className="text-center mt-3">
           Already have an account?{" "}
           <NavLink to="/userlogin" className="text-primary">

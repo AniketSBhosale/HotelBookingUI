@@ -1,11 +1,16 @@
 import axios from "axios";
 
-let baseUrl = "http://localhost:8080";
+const baseUrl = "http://localhost:8080";
 
 class UserService {
-    userRegister(data) {
-        return axios.post(`${baseUrl}/addUsers`, data);
-    }
+  userRegister(data) {
+    return axios.post(`${baseUrl}/addUsers`, data);
+  }
+
+  userLogin(data) {
+    return axios.post(`${baseUrl}/loginUser`, data);
+  }
 }
 
-export default new UserService();
+const userService = new UserService();
+export default userService;

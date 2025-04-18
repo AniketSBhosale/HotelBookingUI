@@ -1,7 +1,7 @@
 import React from "react";
 import { RiAdminFill } from "react-icons/ri";
 
-export default function SuperAdminPage() {
+export default function AdminComponent() {
   return (
     <div
       className="row"
@@ -18,7 +18,6 @@ export default function SuperAdminPage() {
         }}
       >
         <div className="d-flex flex-column m-2 adminpanel">
-          <button className="btn text-white">Manage Users</button>
           <button className="btn text-white">Manage Hotels</button>
           <button className="btn text-white">Manage Bookings</button>
           <button className="btn text-white">View Payments</button>

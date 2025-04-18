@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import userService from "../../service/userService";
+import "bootstrap-icons/font/bootstrap-icons.css";
 
 export default function LoginPage({ setLogin }) {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", message: "" });
   const [validated, setValidated] = useState(false);
-  const [message, setMessage] = useState(""); // ⬅️ For success or error message
-  const [messageType, setMessageType] = useState(""); // success / danger
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   function setField(field, value) {
@@ -19,23 +19,39 @@ export default function LoginPage({ setLogin }) {
 
     const { email, password } = form;
 
-    userService.userLogin({ email, password })
+    userService
+      .userLogin({ email, password })
       .then((response) => {
-        if (response.data !== "Login Failed Invalid Credentials") {
-          setLogin(true);
-          localStorage.setItem("role", response.data); // Save role if needed
-          setMessageType("success");
-          setMessage("Login Successful as " + response.data);
-          setTimeout(() => navigate("/dashboard"), 1500); // Delay redirect for user to see message
+        const role = response.data?.toLowerCase();
+
+        console.log("Login response:", role);
+
+        if (
+          role === "login failed invalid credentials" ||
+          role === "invalid" ||
+          !role
+        ) {
+          setForm({ ...form, message: "Invalid email or password" });
         } else {
-          setMessageType("danger");
-          setMessage("Invalid credentials");
+          setLogin(true);
+          localStorage.setItem("role", role);
+          setForm({ ...form, message: "Login successful" });
+
+          // Replacing switch with if-else
+          if (role === "customer") {
+            navigate("/customerdashboard");
+          } else if (role === "owner") {
+            navigate("/ownerdashboard");
+          } else if (role === "admin") {
+            navigate("/admindashboard");
+          } else {
+            alert("Unknown role: " + role);
+          }
         }
       })
       .catch((error) => {
-        console.error(error);
-        setMessageType("danger");
-        setMessage("An error occurred during login");
+        console.error("Login Error:", error);
+        setForm({ ...form, message: "An error occurred during login" });
       });
   };
 
@@ -44,21 +60,17 @@ export default function LoginPage({ setLogin }) {
       <form
         onSubmit={handleSubmit}
         noValidate
-        className={`p-5 rounded shadow bg-white w-100`}
+        className="p-5 rounded shadow bg-white w-100"
         style={{ maxWidth: "450px", border: "1px solid #ddd" }}
       >
         <h2 className="text-center mb-4 text-dark">Login</h2>
 
-        {message && (
-          <div className={`alert alert-${messageType}`} role="alert">
-            {message}
-          </div>
-        )}
-
         <div className="mb-3">
           <input
             type="email"
-            className={`form-control ${validated && !form.email ? "is-invalid" : ""}`}
+            className={`form-control ${
+              validated && !form.email ? "is-invalid" : ""
+            }`}
             placeholder="Email"
             value={form.email}
             onChange={(e) => setField("email", e.target.value)}
@@ -67,17 +79,38 @@ export default function LoginPage({ setLogin }) {
           <div className="invalid-feedback">Email is required</div>
         </div>
 
-        <div className="mb-3">
+        <div className="mb-3 position-relative">
           <input
-            type="password"
-            className={`form-control ${validated && !form.password ? "is-invalid" : ""}`}
+            type={showPassword ? "text" : "password"}
+            className={`form-control ${
+              validated && !form.password ? "is-invalid" : ""
+            }`}
             placeholder="Password"
             value={form.password}
             onChange={(e) => setField("password", e.target.value)}
             required
           />
           <div className="invalid-feedback">Password is required</div>
+
+          {/* Eye icon to toggle visibility */}
+          <i
+            className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              top: "50%",
+              right: "15px",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              fontSize: "1.2rem",
+              color: "#888",
+            }}
+          ></i>
         </div>
+
+        {form.message && (
+          <div className="text-danger text-center mb-3">{form.message}</div>
+        )}
 
         <button type="submit" className="btn btn-danger w-100">
           Login

@@ -1,9 +1,19 @@
 import React, { useState } from "react";
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [hotels, setHotels] = useState([]);
   const [isUserManage, setIsUserManage] = useState(false);
   const [isManageHotel, setIsManageHotel] = useState(false);
+  const [showAddOwnerModal, setShowAddOwnerModal] = useState(false);
+  const [newOwner, setNewOwner] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role_name: "Owner", 
+  });
+
   const handleUsers = async () => {
     setIsManageHotel(false);
     setIsUserManage(true);
@@ -11,6 +21,7 @@ export default function AdminDashboard() {
       const response = await fetch("http://localhost:8080/getallusers");
       const data = await response.json();
       setUsers(data);
+      setAllUsers(data);
     } catch (err) {
       console.log(err);
     }
@@ -28,10 +39,36 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleOwnerInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewOwner((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSaveOwner = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/addUsers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newOwner), 
+      });
+
+      const result = await response.json();
+      alert(result.message);
+      setShowAddOwnerModal(false);
+      setNewOwner({ name: "", email: "", password: "", role_name: "Owner" });
+      handleUsers();
+    } catch (error) {
+      console.error("Failed to add owner:", error);
+      alert("Error adding owner.");
+    }
+  };
+
   return (
     <div className="container-fluid px-0">
       <div className="row g-0">
-        {/* Sidebar */}
         <div className="col-12 col-md-3 bg-dark text-white min-vh-100 p-3">
           <h4 className="mb-4">Admin Panel</h4>
           <button
@@ -61,48 +98,65 @@ export default function AdminDashboard() {
           <h2 className="mb-4">Welcome Admin</h2>
 
           {isUserManage && (
-            <div className="table-responsive">
-              <table className="table table-striped border">
-                <thead className="table-dark">
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.length > 0 ? (
-                    users.map((user, index) => (
-                      <tr key={index}>
-                        <td>{user.name}</td>
-                        <td>{user.email}</td>
-                        <td>
-                          {user.role_id === 1
-                            ? "Customer"
-                            : user.role_id === 2
-                            ? "Owner"
-                            : "Admin"}
-                        </td>
-                        <td>
-                          <button className="btn btn-success btn-sm me-2">
-                            Edit
-                          </button>
-                          <button className="btn btn-danger btn-sm">
-                            Delete
-                          </button>
+            <div className="container">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <input
+                  type="search"
+                  className="form-control w-75 shadow-sm rounded"
+                  placeholder="Search users..."
+                  onChange={(e) => {
+                    const q = e.target.value.toLowerCase();
+                    const filtered = allUsers.filter((u) =>
+                      u.name.toLowerCase().includes(q)
+                    );
+                    setUsers(filtered);
+                  }}
+                />
+                <button
+                  className="btn btn-success"
+                  onClick={() => setShowAddOwnerModal(true)}
+                >
+                  <i className="bi bi-plus-lg"></i> Add Owner
+                </button>
+              </div>
+
+              <div className="table-responsive">
+                <table className="table table-striped border">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.length > 0 ? (
+                      users.map((user, index) => (
+                        <tr key={index}>
+                          <td>{user.name}</td>
+                          <td>{user.email}</td>
+                          <td>{user.role_name}</td>
+                          <td>
+                            <button className="btn btn-success btn-sm me-2">
+                              Edit
+                            </button>
+                            <button className="btn btn-danger btn-sm">
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center">
+                          <h5>No Users Found</h5>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="4" className="text-center">
-                        <h5>No Users Found</h5>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -160,6 +214,83 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {showAddOwnerModal && (
+        <>
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1040 }}
+          ></div>
+          <div
+            className="modal d-block fade show"
+            tabIndex="-1"
+            style={{ zIndex: 1050 }}
+          >
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title w-100 text-center m-0">
+                    Register New Owner
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setShowAddOwnerModal(false)}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label">Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="name"
+                      value={newOwner.name}
+                      onChange={handleOwnerInputChange}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Email</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      name="email"
+                      value={newOwner.email}
+                      onChange={handleOwnerInputChange}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Password</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      name="password"
+                      value={newOwner.password} 
+                      onChange={handleOwnerInputChange}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowAddOwnerModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleSaveOwner}
+                  >
+                    Save Owner
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

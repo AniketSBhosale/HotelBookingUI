@@ -62,7 +62,6 @@ const Carousel = () => {
         />
       </button>
 
-      {/* Next Arrow */}
       <button
         onClick={setNext}
         style={{

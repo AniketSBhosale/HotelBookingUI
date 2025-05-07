@@ -7,17 +7,16 @@ import HomeComponent from "./Components/HomeComponent";
 import Footer from "./Components/Footer/Footer";
 import AboutUsPage from "./Components/Pages/AboutUsPage";
 import ContactUsPage from "./Components/Pages/ContactUsPage";
-import UserLogin from "./Components/User/UserLogin"; // ✅ Only once
-import UserRegister from "./Components/User/UserRegister";
+import UserLogin from "./Components/User/UserLogin"; 
+import RegisterCustomer from "./Components/User/RegisterCustomer";
 import AdminLogin from "./Components/HotelAdmin/AdminLogin";
 import AdminRegister from "./Components/HotelAdmin/AdminRegister";
-import AdminComponent from "./Components/HotelAdmin/AdminComponent";
 import HotelPage from "./Components/Pages/HotelPage";
 import CustomerDashboard from "./Components/Dashboards/CustomerDashboard";
 import OwnerDashboard from "./Components/Dashboards/OwnerDashboard";
 import AdminDashboard from "./Components/Dashboards/AdminDashboard";
-
-
+import HotelRoomPage from "./Components/Pages/HotelRoomPage";
+import RegisterOwner from "./Components/User/RegisterOwner";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -34,13 +33,15 @@ export default function App() {
         <Route path="/aboutus" element={<AboutUsPage />} />
         <Route path="/contactus" element={<ContactUsPage />} />
         <Route path="/userlogin" element={<UserLogin setLogin={handleLogin} />} />
-        <Route path="/userregister" element={<UserRegister />} />
+        <Route path="/userregister" element={<RegisterCustomer />} />
         <Route path="/adminlogin" element={<AdminLogin setLogin={handleLogin} />} />
         <Route path="/adminregister" element={<AdminRegister />} />
         <Route path="/hotelpage" element={<HotelPage />} />
         <Route path="/customerdashboard" element={<CustomerDashboard />} />
         <Route path="/ownerdashboard" element={<OwnerDashboard />} />
         <Route path="/admindashboard" element={<AdminDashboard />} />
+        <Route path="/hotelroompage/:id" element={<HotelRoomPage />}></Route>
+        <Route path="/registerowner" element={<RegisterOwner />} />
       </Routes>
       <Footer />
     </BrowserRouter>

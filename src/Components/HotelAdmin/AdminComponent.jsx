@@ -10,7 +10,13 @@ export default function AdminComponent() {
         width: "100%",
       }}
     >
-      <div className="col-3" style={{ minHeight: "100vh",backgroundColor: "gray",}}>
+      <div
+        className="col-3"
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "gray",
+        }}
+      >
         <div className="d-flex flex-column m-2 adminpanel">
           <button className="btn text-white">Manage Hotels</button>
           <button className="btn text-white">Manage Bookings</button>

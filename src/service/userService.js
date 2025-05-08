@@ -1,11 +1,16 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080"; // Make sure this matches your backend port
+const baseUrl = "http://localhost:8080";
 
-const userService = {
-  userRegister: (userData) => axios.post(`${API_URL}/addUsers`, userData),
-  userLogin: (loginData) => axios.post(`${API_URL}/loginUser`, loginData),
-};
+class UserService {
+  userRegister(data) {
+    return axios.post(`${baseUrl}/addUsers`, data);
+  }
 
+  userLogin(data) {
+    return axios.post(`${baseUrl}/loginUser`, data);
+  }
+}
+
+const userService = new UserService();
 export default userService;
- 

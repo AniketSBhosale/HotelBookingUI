@@ -23,7 +23,10 @@ export default function AdminLogin({ setLogin }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className={`container mt-0 mb-3 p-5 d-flex flex-column gap-4 text-center ${
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className={`container mt-2 mb-3 p-5 d-flex flex-column gap-4 text-center ${
         validated ? "was-validated" : ""
       }`}
       style={{
@@ -63,7 +66,7 @@ export default function AdminLogin({ setLogin }) {
       <button type="submit" className="btn btn-danger">
         Login
       </button>
- 
+
       <div className="d-flex flex-column flex-lg-row justify-content-between align-items-center gap-2">
         <NavLink to="/adminlogin" className="btn btn-danger">
           Hotel Admin Login

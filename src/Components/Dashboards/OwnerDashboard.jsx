@@ -6,37 +6,84 @@ export default function OwnerDashboard() {
   const [hotels, setHotels] = useState([]);
   const [allHotels, setAllHotels] = useState([]);
   const [isManageHotel, setIsHotelManage] = useState(false);
+  const [isManageBookings, setIsManageBookings] = useState(false);
   const [showAddHotel, setShowAddHotel] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [editHotel, setEditHotel] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [bookings, setBookings] = useState([]);
 
   const [newHotel, setNewHotel] = useState({
+    hotel_id: null,
     name: "",
     location: "",
-    category: "Luxury",
+    category: "", // Placeholder until user selects
+    image_url: "",
+    numberOfBeds: 1,
+    maxGuests: 1,
   });
+
 
   const ownerId = localStorage.getItem("userId");
 
   const handleManageHotels = async () => {
+    setIsManageBookings(false);
     setIsHotelManage(true);
-    setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/hotels/owners/${ownerId}/hotels`);
+      const res = await fetch(`http://localhost:8080/hotels/owner/${ownerId}`);
       const data = await res.json();
       setHotels(data);
       setAllHotels(data);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const handleManageBookings = async () => {
+    setIsHotelManage(false);
+    setIsManageBookings(true);
+    try {
+      const res = await fetch(
+        `http://localhost:8080/bookings/owner/${ownerId}`
+      );
+      const data = await res.json();
+      setBookings(data);
+    } catch (err) {
+      console.error("Failed to fetch bookings:", err);
     }
   };
 
   const handleAddHotel = () => {
-    setEditHotel(null);
-    setNewHotel({ name: "", location: "", category: "Luxury" });
+    setIsEditMode(false);
+    setNewHotel({
+      hotel_id: null,
+      name: "",
+      location: "",
+      category: "",
+      image_url: "",
+      numberOfBeds: 1, // Reset to default value
+      maxGuests: 1, // Reset to default value
+    });
     setShowAddHotel(true);
+  };
+
+  const handleEditHotel = (hotel) => {
+    setIsEditMode(true);
+    setNewHotel(hotel);
+    setShowAddHotel(true);
+  };
+
+  const handleDeleteHotel = async (hotelId) => {
+    if (window.confirm("Are you sure you want to delete this hotel?")) {
+      try {
+        await fetch(`http://localhost:8080/deleteHotelById/${hotelId}`, {
+          method: "DELETE",
+        });
+        alert("Hotel deleted.");
+        handleManageHotels();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to delete hotel.");
+      }
+    }
   };
 
   const handleHotelChange = (e) => {
@@ -44,14 +91,40 @@ export default function OwnerDashboard() {
     setNewHotel((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveHotel = async () => {
-    setLoading(true);
-    try {
-      const method = editHotel ? "PUT" : "POST";
-      const url = editHotel
-        ? `http://localhost:8080/hotels/owners/${ownerId}/hotels/${editHotel.hotel_id}`
-        : `http://localhost:8080/hotels/owners/${ownerId}/hotels`;
+  const uploadImageToServer = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
+    try {
+      const res = await fetch("http://localhost:8080/hotelimage/uploadImage", {
+        method: "POST",
+        body: formData,
+      });
+      return await res.text();
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      return null;
+    }
+  };
+
+  const handleSaveHotel = async () => {
+    if (!newHotel.category) {
+      alert("Please select a valid hotel category.");
+      return;
+    }
+
+    if (!newHotel.image_url) {
+      alert("Please upload an image before saving.");
+      return;
+    }
+
+    const url = isEditMode
+      ? `http://localhost:8080/updateHotelById${newHotel.hotel_id}`
+      : `http://localhost:8080/addHotels/${ownerId}`;
+
+    const method = isEditMode ? "PUT" : "POST";
+
+    try {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -60,36 +133,22 @@ export default function OwnerDashboard() {
 
       alert(await res.text());
       setShowAddHotel(false);
-      setEditHotel(null);
-      setNewHotel({ name: "", location: "", category: "Luxury" });
+      setNewHotel({
+        hotel_id: null,
+        name: "",
+        location: "",
+        category: "", // Reset category too
+        image_url: "",
+        numberOfBeds: 1,
+        maxGuests: 1,
+      });
       handleManageHotels();
     } catch (err) {
       console.error(err);
-      alert(editHotel ? "Failed to update hotel" : "Failed to save hotel");
-    } finally {
-      setLoading(false);
+      alert("Failed to save hotel");
     }
   };
 
-  const handleDeleteHotel = async (hotelId) => {
-    if (!window.confirm("Are you sure you want to delete this hotel?")) return;
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `http://localhost:8080/hotels/owners/${ownerId}/hotels/${hotelId}`,
-        {
-          method: "DELETE",
-        }
-      );
-      alert(await res.text());
-      handleManageHotels();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete hotel");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="container-fluid px-0">
@@ -102,14 +161,11 @@ export default function OwnerDashboard() {
           >
             Manage Hotels
           </button>
-          <button className="btn btn-outline-light mb-2 w-100" disabled>
+          <button
+            className="btn btn-outline-light w-100"
+            onClick={handleManageBookings}
+          >
             Manage Bookings
-          </button>
-          <button className="btn btn-outline-light mb-2 w-100" disabled>
-            View Payments
-          </button>
-          <button className="btn btn-outline-light mb-2 w-100" disabled>
-            Reviews & Ratings
           </button>
         </div>
 
@@ -138,90 +194,123 @@ export default function OwnerDashboard() {
                 </button>
               </div>
 
-              {loading ? (
-                <div className="text-center">Loading hotels...</div>
-              ) : (
-                <div className="table-responsive">
-                  <table className="table table-striped border">
-                    <thead className="table-dark">
-                      <tr>
-                        <th>Name</th>
-                        <th>Location</th>
-                        <th>Category</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {hotels.length > 0 ? (
-                        hotels.map((hotel) => (
-                          <tr key={hotel.hotel_id}>
-                            <td>
-                              <NavLink to={`/hotelroompage/${hotel.hotel_id}`}>
-                                {hotel.name}
-                              </NavLink>
-                            </td>
-                            <td>{hotel.location}</td>
-                            <td>{hotel.category}</td>
-                            <td>
-                              {new Date(hotel.created_at).toLocaleString()}
-                            </td>
-                            <td>
-                              <button
-                                className="btn btn-sm btn-warning me-2"
-                                onClick={() => {
-                                  setEditHotel(hotel);
-                                  setShowAddHotel(true);
-                                  setNewHotel({
-                                    name: hotel.name,
-                                    location: hotel.location,
-                                    category: hotel.category,
-                                  });
-                                }}
-                              >
-                                <i className="bi bi-pencil-square me-1"></i> Update
-                              </button>
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => handleDeleteHotel(hotel.hotel_id)}
-                              >
-                                <i className="bi bi-trash me-1"></i> Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="5" className="text-center">
-                            No Hotels Found
+              <div className="table-responsive">
+                <table className="table table-striped border">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Name</th>
+                      <th>Location</th>
+                      <th>Category</th>
+                      <th>Created At</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hotels.length > 0 ? (
+                      hotels.map((hotel) => (
+                        <tr key={hotel.hotel_id}>
+                          <td>
+                            <NavLink to={`/hotelroompage/${hotel.hotel_id}`}>
+                              {hotel.name}
+                            </NavLink>
+                          </td>
+                          <td>{hotel.location}</td>
+                          <td>{hotel.category}</td>
+                          <td>{new Date(hotel.created_at).toLocaleString()}</td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-warning me-2"
+                              onClick={() => handleEditHotel(hotel)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => handleDeleteHotel(hotel.hotel_id)}
+                            >
+                              Delete
+                            </button>
                           </td>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="text-center">
+                          No Hotels Found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {isManageBookings && (
+            <>
+              <h4>All Bookings</h4>
+              <div className="table-responsive">
+                <table className="table table-bordered">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Booking ID</th>
+                      <th>Hotel</th>
+                      <th>Room</th>
+                      <th>Customer</th>
+                      <th>Check-In</th>
+                      <th>Check-Out</th>
+                      <th>Total Price</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bookings.length > 0 ? (
+                      bookings.map((b) => (
+                        <tr key={b.booking_id}>
+                          <td>{b.booking_id}</td>
+                          <td>{b.hotel_name || b.hotel_id}</td>
+                          <td>{b.room_id || b.room_type}</td>
+                          <td>{b.customer_id || b.customer_name}</td>
+                          <td>
+                            {new Date(b.check_in_date).toLocaleDateString()}
+                          </td>
+                          <td>
+                            {new Date(b.check_out_date).toLocaleDateString()}
+                          </td>
+                          <td>₹{b.total_price}</td>
+                          <td>{b.booking_status}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          No bookings found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
 
           {showAddHotel && (
             <>
-              <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} />
+              <div
+                className="modal-backdrop fade show"
+                style={{ zIndex: 1040 }}
+              />
               <div className="modal d-block fade show" style={{ zIndex: 1050 }}>
                 <div className="modal-dialog modal-dialog-centered">
                   <div className="modal-content">
                     <div className="modal-header">
                       <h5 className="modal-title w-100 text-center">
-                        {editHotel ? "Update Hotel" : "Add Hotel"}
+                        {isEditMode ? "Edit Hotel" : "Add Hotel"}
                       </h5>
                       <button
                         type="button"
                         className="btn-close"
-                        onClick={() => {
-                          setShowAddHotel(false);
-                          setEditHotel(null);
-                          setNewHotel({ name: "", location: "", category: "Luxury" });
-                        }}
+                        onClick={() => setShowAddHotel(false)}
                       />
                     </div>
                     <div className="modal-body">
@@ -253,31 +342,84 @@ export default function OwnerDashboard() {
                           value={newHotel.category}
                           onChange={handleHotelChange}
                         >
+                          <option value="" disabled>Select category</option>
                           <option value="Luxury">Luxury</option>
                           <option value="Standard">Standard</option>
                           <option value="Boutique">Boutique</option>
                           <option value="Budget">Budget</option>
                         </select>
                       </div>
+
+                      <div className="mb-3">
+                        <label className="form-label">Number of Beds</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="numberOfBeds"
+                          value={newHotel.numberOfBeds}
+                          onChange={handleHotelChange}
+                          min={1}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Max Guests</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="maxGuests"
+                          value={newHotel.maxGuests}
+                          onChange={handleHotelChange}
+                          min={1}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Upload Image</label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const uploadedUrl = await uploadImageToServer(
+                                file
+                              );
+                              if (uploadedUrl) {
+                                setNewHotel((prev) => ({
+                                  ...prev,
+                                  image_url: uploadedUrl,
+                                }));
+                              } else {
+                                alert("Failed to upload image");
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      {newHotel.image_url && (
+                        <div className="text-center mb-3">
+                          <img
+                            src={newHotel.image_url}
+                            alt="Preview"
+                            className="img-fluid rounded"
+                            style={{ maxHeight: "200px", objectFit: "cover" }}
+                          />
+                        </div>
+                      )}
                     </div>
                     <div className="modal-footer">
                       <button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={() => {
-                          setShowAddHotel(false);
-                          setEditHotel(null);
-                          setNewHotel({ name: "", location: "", category: "Luxury" });
-                        }}
+                        onClick={() => setShowAddHotel(false)}
                       >
-                        Close
+                        Cancel
                       </button>
                       <button
                         type="button"
                         className="btn btn-primary"
                         onClick={handleSaveHotel}
                       >
-                        {editHotel ? "Update" : "Save"} Hotel
+                        {isEditMode ? "Update Hotel" : "Save Hotel"}
                       </button>
                     </div>
                   </div>

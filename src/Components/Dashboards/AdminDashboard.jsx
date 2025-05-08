@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // Store original users
   const [hotels, setHotels] = useState([]);
   const [isUserManage, setIsUserManage] = useState(false);
   const [isManageHotel, setIsManageHotel] = useState(false);
@@ -11,7 +11,6 @@ export default function AdminDashboard() {
     name: "",
     email: "",
     password: "",
-    role_name: "Owner", 
   });
 
   const handleUsers = async () => {
@@ -21,7 +20,7 @@ export default function AdminDashboard() {
       const response = await fetch("http://localhost:8080/getallusers");
       const data = await response.json();
       setUsers(data);
-      setAllUsers(data);
+      setAllUsers(data); // Keep unfiltered copy
     } catch (err) {
       console.log(err);
     }
@@ -52,14 +51,14 @@ export default function AdminDashboard() {
       const response = await fetch("http://localhost:8080/addUsers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newOwner), 
+        body: JSON.stringify({ ...newOwner, role_id: 2 }),
       });
 
-      const result = await response.json();
-      alert(result.message);
+      const message = await response.text();
+      alert(message);
       setShowAddOwnerModal(false);
-      setNewOwner({ name: "", email: "", password: "", role_name: "Owner" });
-      handleUsers();
+      setNewOwner({ name: "", email: "", password: "" });
+      handleUsers(); // Refresh list
     } catch (error) {
       console.error("Failed to add owner:", error);
       alert("Error adding owner.");
@@ -69,6 +68,7 @@ export default function AdminDashboard() {
   return (
     <div className="container-fluid px-0">
       <div className="row g-0">
+        {/* Sidebar */}
         <div className="col-12 col-md-3 bg-dark text-white min-vh-100 p-3">
           <h4 className="mb-4">Admin Panel</h4>
           <button
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
           >
             View Hotels
           </button>
-          <button className="btn btn-outline-light mb-2 w-100">
+          {/* <button className="btn btn-outline-light mb-2 w-100">
             Manage Bookings
           </button>
           <button className="btn btn-outline-light mb-2 w-100">
@@ -91,12 +91,13 @@ export default function AdminDashboard() {
           </button>
           <button className="btn btn-outline-light mb-2 w-100">
             Reviews and Ratings
-          </button>
+          </button> */}
         </div>
 
         <div className="col-12 col-md-9 p-3">
           <h2 className="mb-4">Welcome Admin</h2>
 
+          {/* User Management Section */}
           {isUserManage && (
             <div className="container">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -136,7 +137,13 @@ export default function AdminDashboard() {
                         <tr key={index}>
                           <td>{user.name}</td>
                           <td>{user.email}</td>
-                          <td>{user.role_name}</td>
+                          <td>
+                            {user.role_id === 1
+                              ? "Customer"
+                              : user.role_id === 2
+                                ? "Owner"
+                                : "Admin"}
+                          </td>
                           <td>
                             <button className="btn btn-success btn-sm me-2">
                               Edit
@@ -160,6 +167,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* Hotel Management Section */}
           {isManageHotel && (
             <>
               <div className="row align-items-center mb-3">
@@ -215,6 +223,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Modal for Add Owner */}
       {showAddOwnerModal && (
         <>
           <div
@@ -265,7 +274,7 @@ export default function AdminDashboard() {
                       type="password"
                       className="form-control"
                       name="password"
-                      value={newOwner.password} 
+                      value={newOwner.password}
                       onChange={handleOwnerInputChange}
                     />
                   </div>
